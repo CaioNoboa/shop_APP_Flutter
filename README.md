@@ -1,1 +1,3 @@
 # shop_APP_Flutter
+
+### Aplicação em desenvolvimento...
