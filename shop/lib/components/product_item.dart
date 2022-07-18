@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop/models/cart.dart';
 import 'package:shop/models/product.dart';
 import 'package:shop/utils/app_routes.dart';
 
 class ProductItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final product = Provider.of<Product>(
-      context,
-      listen: false,
-    );
+    final product = Provider.of<Product>(context, listen: false);
     // o padrão é listen: true, para que este componente esteja 'escutando' as mudanças de estado. Ao colocarmos false, podemos usar o Consumer apenas na parte do código que a interface será alterada pela mudança de estado. Assim, otimizamos a aplicação, pois os componentes que não sofrerão alteração na interface não serão renderizados novamente.
+    final cart = Provider.of<Cart>(context);
 
     return ClipRRect(
       // corta de forma arredondada determinado elemento
@@ -47,8 +46,11 @@ class ProductItem extends StatelessWidget {
             style: Theme.of(context).textTheme.displaySmall,
           ),
           trailing: IconButton(
-            onPressed: () {},
+            onPressed: () {
+              cart.addItem(product);
+            },
             icon: Icon(Icons.shopping_cart),
+            color: Theme.of(context).colorScheme.secondary,
           ),
         ),
       ),

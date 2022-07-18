@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shop/components/badge.dart';
 import 'package:shop/components/product_grid.dart';
+import 'package:shop/models/cart.dart';
+import 'package:shop/utils/app_routes.dart';
 
 enum FilterOptions {
   Favorite,
@@ -42,6 +46,21 @@ class _ProductsOverviewPageState extends State<ProductsOverviewPage> {
                   _showFavoriteOnly = false;
                 }
               });
+            },
+          ),
+          Consumer<Cart>(
+            child: IconButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed(AppRoutes.cart);
+              },
+              icon: Icon(Icons.shopping_cart),
+            ),
+            // como o ícone acima não será alterado pela mudança de estado, podemos fazer isso para otimização
+            builder: (context, cart, child) {
+              return Badge(
+                value: cart.itemsCount.toString(),
+                child: child!,
+              );
             },
           ),
         ],
