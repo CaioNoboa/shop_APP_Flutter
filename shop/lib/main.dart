@@ -6,6 +6,8 @@ import 'package:shop/utils/app_routes.dart';
 import 'package:shop/utils/theme.dart';
 import 'package:shop/pages/products_overview_page.dart';
 
+import 'models/cart.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -15,8 +17,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProductList(),
+    return MultiProvider (
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProductList()),
+        ChangeNotifierProvider(create: (_) => Cart()),
+      ],
+      // todo classe with ChangeNotifier precisa ser passada acima
       child: MaterialApp(
         title: 'Flutter Demo',
         theme: appTheme,
