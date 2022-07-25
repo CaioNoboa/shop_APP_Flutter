@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shop/models/product.dart';
@@ -28,6 +27,26 @@ class _ProductFormPageState extends State<ProductFormPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_formData.isEmpty) {
+      final argument = ModalRoute.of(context)?.settings.arguments;
+
+      if (argument != null) {
+        final product = argument as Product;
+        _formData['id'] = product.id;
+        _formData['name'] = product.name;
+        _formData['price'] = product.price;
+        _formData['description'] = product.description;
+        _formData['imageUrl'] = product.imageUrl;
+
+        _imageUrlController.text = product.imageUrl;
+      }      
+    }
+  }
+
+  @override
   void dispose() {
     super.dispose();
     _priceFocus.dispose();
@@ -51,11 +70,14 @@ class _ProductFormPageState extends State<ProductFormPage> {
   void _submitForm() {
     // validando as respostas do formulário
     final isValid = _formKey.currentState?.validate() ?? false;
+
     if (!isValid) {
       return;
     }
+
     _formKey.currentState?.save();
-    Provider.of<ProductList>(context, listen: false).addProductFromData(_formData);
+
+    Provider.of<ProductList>(context, listen: false).saveProduct(_formData);
     // Por estarmos fora do método build precisamos passar listen: false
     Navigator.of(context).pop();
   }
@@ -79,6 +101,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
           child: ListView(
             children: [
               TextFormField(
+                initialValue: _formData['name']?.toString(),
                 decoration: InputDecoration(labelText: 'Nome'),
                 textInputAction: TextInputAction.next,
                 // quando apertamos 'ok' no teclado do celular, irá automaticamente para o próximo campo. Caso isso não ocorra automaticamente (pode funcionar em um dispositivo e não em outro) ou se queremos personalizar o focus, podemos controlar o foco com FocusNode e FocusScope
@@ -104,6 +127,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 },
               ),
               TextFormField(
+                initialValue: _formData['price']?.toString(),
                 decoration: InputDecoration(labelText: 'Preço'),
                 textInputAction: TextInputAction.next,
                 focusNode: _priceFocus,
@@ -111,9 +135,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 onFieldSubmitted: (_) {
                   FocusScope.of(context).requestFocus(_descriptionFocus);
                 },
-                onSaved: (price) => _formData['price'] = double.parse(price ?? '0.0'),
+                onSaved: (price) => _formData['price'] = double.parse(price ?? '0'),
                 validator: (_price) {
-                  final priceString = _price ?? '-1';
+                  final priceString = _price ?? '';
                   final price = double.tryParse(priceString) ?? -1;
                   if (price <= 0) {
                     return 'Informe um preço válido';
@@ -122,6 +146,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 },
               ),
               TextFormField(
+                initialValue: _formData['description']?.toString(),
                 decoration: InputDecoration(labelText: 'Descrição'),
                 textInputAction: TextInputAction.next,
                 focusNode: _descriptionFocus,
