@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
+import 'package:http/http.dart' as http;
 import 'package:shop/data/dummy_data.dart';
 import 'package:shop/models/product.dart';
 
 class ProductList with ChangeNotifier {
+  final _baseUrl = 'https://shop-cod3r-5ef24-default-rtdb.firebaseio.com';
   List<Product> _items = dummyProducts;
 
   List<Product> get items {
@@ -19,7 +22,7 @@ class ProductList with ChangeNotifier {
     return _items.length;
   }
 
-  void saveProduct(Map<String, Object> data) {
+  Future<void> saveProduct(Map<String, Object> data) {
     bool hasId = data['id'] != null;
     // se é diferente de nulo, temos Id
 
@@ -32,19 +35,42 @@ class ProductList with ChangeNotifier {
     );
 
     if (hasId) {
-      updateProduct(product);
+      return updateProduct(product);
     } else {
-      addProduct(product);
+      return addProduct(product);
     }
   }
 
-  void addProduct(Product product) {
-    _items.add(product);
-    notifyListeners();
-    // alterações precisam do notifyListeners para que o ChangeNotifier cumpra seu papel no padrão Observer.
+  Future<void> addProduct(Product product) {
+    final future = http
+        .post(
+      Uri.parse('$_baseUrl/products.json'), // .json é requerido pelo firebase
+      body: jsonEncode(
+        {
+          'name': product.name,
+          'price': product.price,
+          'description': product.description,
+          'imageUrl': product.imageUrl,
+          'isFavorite': product.isFavorite,
+        },
+      ),
+    );
+    return future.then<void>((response) {
+      final id = jsonDecode(response.body)['name'];
+      _items.add(Product(
+        id: id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        imageUrl: product.imageUrl,
+        isFavorite: product.isFavorite,
+      ));
+      notifyListeners();
+      // alterações precisam do notifyListeners para que o ChangeNotifier cumpra seu papel no padrão Observer.
+    });
   }
 
-  void updateProduct(Product product) {
+  Future<void> updateProduct(Product product) {
     int index = _items.indexWhere((prod) => prod.id == product.id);
 
     if (index >= 0) {
@@ -52,6 +78,8 @@ class ProductList with ChangeNotifier {
       _items[index] = product;
       notifyListeners();
     }
+
+    return Future.value();
   }
 
   void removeProduct(Product product) {
