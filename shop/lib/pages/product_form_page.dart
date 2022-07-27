@@ -88,7 +88,21 @@ class _ProductFormPageState extends State<ProductFormPage> {
     // Por estarmos fora do método build precisamos passar listen: false
     Provider.of<ProductList>(context, listen: false)
         .saveProduct(_formData)
-        .then(
+        .catchError((error) {
+      return showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Algo de errado não está certo'),
+          content: Text('Ocorreu um erro para salvar o produto!'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Ok'),
+            )
+          ],
+        ),
+      );
+    }).then(
       (value) {
         setState(() {
           _isLoading = false;
@@ -113,8 +127,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
       ),
       body: _isLoading
           ? Center(
-            child: CircularProgressIndicator(),
-          )
+              child: CircularProgressIndicator(),
+            )
           : Padding(
               padding: const EdgeInsets.all(15),
               child: Form(
