@@ -33,6 +33,8 @@ class OrdersPage extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
+          } else if (snapshot.error != null) {
+            return Center(child: Text('Ocorreu um erro!'));
           } else {
             return Consumer<OrderList>(
               builder: (context, orders, child) {
@@ -50,6 +52,9 @@ class OrdersPage extends StatelessWidget {
           }
         },
       ),
+
+      // Mesmo em um stateless podemos trabalhar estado com FutureBuilder
+
 
       // body: _isLoading
       //     ? Center(child: CircularProgressIndicator())
