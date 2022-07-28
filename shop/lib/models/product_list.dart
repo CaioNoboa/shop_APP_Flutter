@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
-import 'package:shop/data/dummy_data.dart';
+import 'package:shop/exceptions/http_exception.dart';
 import 'package:shop/models/product.dart';
+import 'package:shop/utils/constants.dart';
 
 class ProductList with ChangeNotifier {
-  final _baseUrl = 'https://shop-cod3r-5ef24-default-rtdb.firebaseio.com';
-  List<Product> _items = dummyProducts;
+  List<Product> _items = [];
 
   List<Product> get items {
     return [..._items];
@@ -20,6 +20,28 @@ class ProductList with ChangeNotifier {
 
   int get itemsCount {
     return _items.length;
+  }
+
+  Future<void> loadProducts() async {
+    _items.clear();
+    final response = await http.get(
+      Uri.parse('${Constants.productBaseUrl}.json'),
+    );
+    if (response.body == 'null') {
+      return;
+    }
+    Map<String, dynamic> data = jsonDecode(response.body);
+    data.forEach((productId, productData) {
+      _items.add(Product(
+        id: productId,
+        name: productData['name'],
+        description: productData['description'],
+        price: productData['price'],
+        imageUrl: productData['imageUrl'],
+        isFavorite: productData['isFavorite'],
+      ));
+    });
+    notifyListeners();
   }
 
   Future<void> saveProduct(Map<String, Object> data) {
@@ -41,10 +63,9 @@ class ProductList with ChangeNotifier {
     }
   }
 
-  Future<void> addProduct(Product product) {
-    final future = http
-        .post(
-      Uri.parse('$_baseUrl/products.json'), // .json é requerido pelo firebase
+  Future<void> addProduct(Product product) async {
+    final response = await http.post(
+      Uri.parse('${Constants.productBaseUrl}.json'),
       body: jsonEncode(
         {
           'name': product.name,
@@ -55,38 +76,96 @@ class ProductList with ChangeNotifier {
         },
       ),
     );
-    return future.then<void>((response) {
-      final id = jsonDecode(response.body)['name'];
-      _items.add(Product(
-        id: id,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        imageUrl: product.imageUrl,
-        isFavorite: product.isFavorite,
-      ));
-      notifyListeners();
-      // alterações precisam do notifyListeners para que o ChangeNotifier cumpra seu papel no padrão Observer.
-    });
+    final id = jsonDecode(response.body)['name'];
+    _items.add(Product(
+      id: id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      imageUrl: product.imageUrl,
+      isFavorite: product.isFavorite,
+    ));
+    notifyListeners();
   }
 
-  Future<void> updateProduct(Product product) {
+  // Ao colocarmos async e await, conseguimos codificar de forma semelhante ao síncrono, não precisaremos do método then
+
+  // Future<void> addProduct(Product product) {
+  //   final future = http
+  //       .post(
+  //     Uri.parse('$_baseUrl/products.json'), // .json é requerido pelo firebase
+  //     body: jsonEncode(
+  //       {
+  //         'name': product.name,
+  //         'price': product.price,
+  //         'description': product.description,
+  //         'imageUrl': product.imageUrl,
+  //         'isFavorite': product.isFavorite,
+  //       },
+  //     ),
+  //   );
+  //   return future.then<void>((response) {
+  //     final id = jsonDecode(response.body)['name'];
+  //     _items.add(Product(
+  //       id: id,
+  //       name: product.name,
+  //       description: product.description,
+  //       price: product.price,
+  //       imageUrl: product.imageUrl,
+  //       isFavorite: product.isFavorite,
+  //     ));
+  //     notifyListeners();
+  //     // alterações precisam do notifyListeners para que o ChangeNotifier cumpra seu papel no padrão Observer.
+  //   });
+  // }
+
+  Future<void> updateProduct(Product product) async {
     int index = _items.indexWhere((prod) => prod.id == product.id);
 
     if (index >= 0) {
+      await http.patch(
+        Uri.parse('${Constants.productBaseUrl}/${product.id}.json'),
+        body: jsonEncode(
+          {
+            'name': product.name,
+            'price': product.price,
+            'description': product.description,
+            'imageUrl': product.imageUrl,
+            'isFavorite': product.isFavorite,
+          },
+        ),
+      );
       // produto válido
       _items[index] = product;
       notifyListeners();
     }
-
-    return Future.value();
   }
 
-  void removeProduct(Product product) {
+  Future<void> removeProduct(Product product) async {
     int index = _items.indexWhere((prod) => prod.id == product.id);
+
     if (index >= 0) {
-      _items.removeWhere((prod) => prod.id == product.id);
+      // exclusão local
+      final product = _items[index];
+      _items.remove(product);
       notifyListeners();
+
+      // é enviado para o servidor
+      final response = await http.delete(
+        Uri.parse('${Constants.productBaseUrl}/${product.id}.json'),
+      );
+
+      // o servidor responderá, mesmo que dê erro
+      // se houver problemas, o item será restaurado
+      if (response.statusCode >= 400) {
+        // problemas de requisição
+        _items.insert(index, product);
+        notifyListeners();
+        throw HttpException(
+          msg: 'Não foi possível excluir o produto',
+          statusCode: response.statusCode,
+        );
+      }
     }
   }
 }

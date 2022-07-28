@@ -71,25 +71,22 @@ class _ProductFormPageState extends State<ProductFormPage> {
     return isValidUrl && endsWithFile;
   }
 
-  void _submitForm() {
-    // validando as respostas do formulário
+  Future<void> _submitForm() async {
     final isValid = _formKey.currentState?.validate() ?? false;
-
     if (!isValid) {
       return;
     }
-
     _formKey.currentState?.save();
+    setState(() => _isLoading = true);
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    // Por estarmos fora do método build precisamos passar listen: false
-    Provider.of<ProductList>(context, listen: false)
-        .saveProduct(_formData)
-        .catchError((error) {
-      return showDialog<void>(
+    try {
+      await Provider.of<ProductList>(
+        context,
+        listen: false,
+      ).saveProduct(_formData);
+      Navigator.of(context).pop();
+    } catch (e) {
+      await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
           title: Text('Algo de errado não está certo'),
@@ -102,16 +99,52 @@ class _ProductFormPageState extends State<ProductFormPage> {
           ],
         ),
       );
-    }).then(
-      (value) {
-        setState(() {
-          _isLoading = false;
-        });
-        Navigator.of(context).pop();
-      },
-    );
-    // Apenas retornará para a tela quando estiver finalizado
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
+
+  // void _submitForm() {
+  //   // validando as respostas do formulário
+  //   final isValid = _formKey.currentState?.validate() ?? false;
+
+  //   if (!isValid) {
+  //     return;
+  //   }
+
+  //   _formKey.currentState?.save();
+
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
+
+  //   // Por estarmos fora do método build precisamos passar listen: false
+  //   Provider.of<ProductList>(context, listen: false)
+  //       .saveProduct(_formData)
+  //       .catchError((error) {
+  //     return showDialog<void>(
+  //       context: context,
+  //       builder: (context) => AlertDialog(
+  //         title: Text('Algo de errado não está certo'),
+  //         content: Text('Ocorreu um erro para salvar o produto!'),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.of(context).pop(),
+  //             child: Text('Ok'),
+  //           )
+  //         ],
+  //       ),
+  //     );
+  //   }).then(
+  //     (value) {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //       Navigator.of(context).pop();
+  //     },
+  //   );
+  //   // Apenas retornará para a tela quando estiver finalizado
+  // }
 
   @override
   Widget build(BuildContext context) {
