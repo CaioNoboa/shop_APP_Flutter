@@ -124,16 +124,13 @@ class _AuthFormState extends State<AuthForm>
     return Card(
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: AnimatedBuilder(
-        animation: _heightAnimation!,
-        builder: (context, childForm) {
-          return Container(
-            padding: EdgeInsets.all(16),
-            height: _heightAnimation?.value.height ?? (_isLogin() ? 310 : 400),
-            width: deviceSize.width * 0.75,
-            child: childForm,
-          );
-        },
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+        padding: EdgeInsets.all(16),
+        height: _isLogin() ? 310 : 400,
+        // height: _heightAnimation?.value.height ?? (_isLogin() ? 310 : 400),
+        width: deviceSize.width * 0.75,
         child: Form(
           key: _formKey,
           child: Column(
