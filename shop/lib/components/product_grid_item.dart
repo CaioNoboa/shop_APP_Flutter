@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shop/exceptions/http_exception.dart';
+import 'package:shop/models/auth.dart';
 import 'package:shop/models/cart.dart';
 import 'package:shop/models/product.dart';
 import 'package:shop/utils/app_routes.dart';
@@ -11,7 +12,8 @@ class ProductGridItem extends StatelessWidget {
     final msg = ScaffoldMessenger.of(context);
     final product = Provider.of<Product>(context, listen: false);
     // o padrão é listen: true, para que este componente esteja 'escutando' as mudanças de estado. Ao colocarmos false, podemos usar o Consumer apenas na parte do código que a interface será alterada pela mudança de estado. Assim, otimizamos a aplicação, pois os componentes que não sofrerão alteração na interface não serão renderizados novamente.
-    final cart = Provider.of<Cart>(context);
+    final cart = Provider.of<Cart>(context, listen: false);
+    final auth = Provider.of<Auth>(context, listen: false);
 
     return ClipRRect(
       // corta de forma arredondada determinado elemento
@@ -36,7 +38,8 @@ class ProductGridItem extends StatelessWidget {
               // coloquei context1 para usar o contexto lá do main. Se colocar apenas context, a cor do ícone será alterada, pois utilizará o BuildContext desse arquivo
               onPressed: () async {
                 try {
-                  await product.toggleFavorite();
+                  await product.toggleFavorite(
+                      auth.token ?? '', auth.userId ?? '');
                 } on HttpException catch (error) {
                   msg.showSnackBar(SnackBar(
                     content: Text(error.toString()),
