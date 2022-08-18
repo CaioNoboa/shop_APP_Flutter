@@ -1,8 +1,10 @@
+import 'package:shop/utils/key.dart';
+
 class Constants {
   static const userFavoritesUrl =
-      'https://shop-cod3r-5ef24-default-rtdb.firebaseio.com/userFavorites';
+      '${UrlKey.firebaseUrl}/userFavorites';
   static const productBaseUrl =
-      'https://shop-cod3r-5ef24-default-rtdb.firebaseio.com/products';
+      '${UrlKey.firebaseUrl}/products';
   static const orderBaseUrl =
-      'https://shop-cod3r-5ef24-default-rtdb.firebaseio.com/orders';
+      '${UrlKey.firebaseUrl}/orders';
 }
